@@ -1,0 +1,8 @@
+__pycache__
+.DS_Store
+venv_churn
+airflow/logs
+airflow/airflow.db
+airflow/standalone_admin_password.txt
+model/model.sav
+data/preprocessed/**.csv
