@@ -1,47 +1,41 @@
-version: '3'
-services:
-  postgres:
-    image: postgres:9.6
-    environment:
-      - POSTGRES_USER=airflow
-      - POSTGRES_PASSWORD=airflow
-      - POSTGRES_DB=airflow
-    ports:
-      - "5432:5432"
+version: '3.8'
 
-  webserver:
-    image: puckel/docker-airflow:1.10.1
-    build:
-      context: https://github.com/puckel/docker-airflow.git#1.10.1
-      dockerfile: Dockerfile
-      args:
-        AIRFLOW_DEPS: gcp_api,s3
-        PYTHON_DEPS: sqlalchemy==1.2.0
+services:
+  airflow:
+    image: apache/airflow:2.8.1
     restart: always
-    depends_on:
-      - postgres
-    environment:
-      - LOAD_EX=n
-      - EXECUTOR=Local
-      - FERNET_KEY=jsDPRErfv8Z_eVTnGfF8ywd19j4pyqE3NpdUBA_oRTo=
-    volumes:
-      # - ./examples/intro-example/dags:/usr/local/airflow/dags
-      - .:/usr/local/airflow/dags
-      - ./airflow-data/includes:/opt/airflow/includes
-      - ./airflow-data/logs:/opt/airflow/logs
-      - ./airflow-data/plugins:/opt/airflow/plugins
-      - ./airflow-data/airflow.cfg:/opt/airflow/airflow.cfg
-      # Uncomment to include custom plugins
-      # - ./plugins:/usr/local/airflow/plugins
     ports:
       - "8080:8080"
-    command: webserver
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "[ -f /usr/local/airflow/airflow-webserver.pid ]"
-        ]
-      interval: 30s
-      timeout: 30s
-      retries: 3
+    environment:
+      - AIRFLOW__CORE__FERNET_KEY=harshita
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=sqlite:////usr/local/airflow/airflow.db
+      - AIRFLOW__WEBSERVER__RBAC=true
+      - AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC=10
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+
+  mlflow:
+    image: python:3.10-slim
+    restart: always
+    command: mlflow server --host 0.0.0.0 --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlflow_artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow_artifacts:/mlflow_artifacts
+      - ./mlflow_db:/mlflow_db
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow.db
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=./mlflow_artifacts
+
+  python:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    command: bash -c "pip install --no-cache-dir -r requirements.txt && airflow db init && airflow webserver --port 8080"
+
+volumes:
+  mlflow_db:
