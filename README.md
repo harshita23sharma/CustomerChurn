@@ -56,3 +56,21 @@ RUN
 cd customer_churn
 docker-compose build python
 ```
+Airflow Training and inference pipeline can be scheduled at different time intervals
+Based on target customer (cohort type). For monthly contract type -> pipeline can be run weekly or daily and for yearly contract type, same pipeline can be run monthly
+
+<img width="1416" alt="image" src="https://github.com/harshita23sharma/CustomerChurn/assets/16293041/b3149d84-e1fa-4bf4-bcdc-3c2672385aa5">
+
+Training pipeline:
+<img width="1435" alt="image" src="https://github.com/harshita23sharma/CustomerChurn/assets/16293041/01f57162-7a2d-4574-81d4-e4f8d05b095b">
+
+Training Logs:
+<img width="1423" alt="image" src="https://github.com/harshita23sharma/CustomerChurn/assets/16293041/df48a7c3-9fed-43da-b044-2170e46a3d25">
+
+
+For tracking the parameters and metrics, MLFLOW has been setup
+It can also be used for selecting best model on the fly and deploying the same.
+
+
+
+
