@@ -29,56 +29,56 @@ class TrainingPipeline:
         self.target = target
 
     def __call__(self):
-        # mlflow.set_tracking_uri(MlFlowConfig.uri)
-        # experiment = mlflow.get_experiment_by_name(MlFlowConfig.experiment_name)
+        mlflow.set_tracking_uri(MlFlowConfig.uri)
+        experiment = mlflow.get_experiment_by_name(MlFlowConfig.experiment_name)
 
-        # if experiment is None:
-        #     experiment_id = mlflow.create_experiment(
-        #         name=MlFlowConfig.experiment_name, artifact_location=MlFlowConfig.artifact_path
-        #     )
-        # else:
-        #     experiment_id = experiment.experiment_id
-        # mlflow.set_experiment(experiment_id=experiment_id)
+        if experiment is None:
+            experiment_id = mlflow.create_experiment(
+                name=MlFlowConfig.experiment_name, artifact_location=MlFlowConfig.artifact_path
+            )
+        else:
+            experiment_id = experiment.experiment_id
+        mlflow.set_experiment(experiment_id=experiment_id)
 
-        # with mlflow.start_run():
-        print("MLFLOW..........")
-        train_df = pd.read_csv(self.train_path)
-        test_df = pd.read_csv(self.test_path)
-        X_train, y_train, X_test, y_test = (
-            train_df.drop(columns=[self.target]),
-            train_df[self.target],
-            test_df.drop(columns=[self.target]),
-            test_df[self.target],
-        )
-        lr_clf = LogisticRegression()
-        lr_model, train_lr, test_lr, f1_lr, pred_lr, time_lr = self.parameter_finder(
-            lr_clf, self.params, X_train, y_train, X_test, y_test
-        )
+        with mlflow.start_run():
+            print("MLFLOW..........")
+            train_df = pd.read_csv(self.train_path)
+            test_df = pd.read_csv(self.test_path)
+            X_train, y_train, X_test, y_test = (
+                train_df.drop(columns=[self.target]),
+                train_df[self.target],
+                test_df.drop(columns=[self.target]),
+                test_df[self.target],
+            )
+            lr_clf = LogisticRegression()
+            lr_model, train_lr, test_lr, f1_lr, pred_lr, time_lr = self.parameter_finder(
+                lr_clf, self.params, X_train, y_train, X_test, y_test
+            )
 
-        model = lr_model
-        # Evaluate
-        y_test = test_df[self.target]
-        y_pred = model.predict(test_df.drop(self.target, axis=1))
+            model = lr_model
+            # Evaluate
+            y_test = test_df[self.target]
+            y_pred = model.predict(test_df.drop(self.target, axis=1))
 
-        # Metrics
-        precision = precision_score(y_test, y_pred)
-        recall = recall_score(y_test, y_pred)
-        roc_auc = roc_auc_score(y_test, y_pred)
-        print(classification_report(y_test, y_pred))
+            # Metrics
+            precision = precision_score(y_test, y_pred)
+            recall = recall_score(y_test, y_pred)
+            roc_auc = roc_auc_score(y_test, y_pred)
+            print(classification_report(y_test, y_pred))
 
-        metrics = {"precision": precision, "recall": recall, "roc_auc": roc_auc}
-        # Mlflow
-        # mlflow.log_params(self.params)
-        # mlflow.log_metrics(metrics)
-        # mlflow.set_tag(key="model", value=self.model_name)
-        # mlflow.sklearn.log_model(
-        #     sk_model=model,
-        #     artifact_path=MlFlowConfig.artifact_path,
-        # )
-        # save the model to disk
-        joblib.dump(model, filename=MlFlowConfig.model_path)
-        model = joblib.load(filename=MlFlowConfig.model_path)
-        return metrics
+            metrics = {"precision": precision, "recall": recall, "roc_auc": roc_auc}
+            # Mlflow
+            mlflow.log_params(self.params)
+            mlflow.log_metrics(metrics)
+            mlflow.set_tag(key="model", value=self.model_name)
+            mlflow.sklearn.log_model(
+                sk_model=model,
+                artifact_path=MlFlowConfig.artifact_path,
+            )
+            # save the model to disk
+            joblib.dump(model, filename=MlFlowConfig.model_path)
+            model = joblib.load(filename=MlFlowConfig.model_path)
+            return metrics
 
     def parameter_finder(self, model, parameters, X_train, y_train, X_test, y_test):
         start = time.time()

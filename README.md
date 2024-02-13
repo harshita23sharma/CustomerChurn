@@ -4,58 +4,60 @@ End to end ML production pipeline for Customer Churn Prediction
 Machine Learning Case Study: Telco Customer Churn Prediction
 Dataset : https://www.kaggle.com/datasets/blastchar/telco-customer-churn
 
-About Dataset:
+**About Dataset**:
 Customers who left within the last month – the column is called Churn
 
-Hypothesis:
-1. Customers who stayed with the company longer (longer tenure) are more likely to stay with the company. OR Customers more likely to churn have lower tenure
-2. Customers more likely to churn have higher monthly charges
 
-#### Model & Feature Selection
-Based on feature importance of model (based on feature weights), following features were selected for model building: ['Contract', 'tenure', 'InternetService', 'Dependents', 'TotalCharges', 'MonthlyCharges]
+The objective is to predict whether users are likely to churn in the future based on their characteristics derived from historical data. By identifying potential churners, targeted campaigns can be deployed to retain customers, as the cost of retention is typically lower than acquisition.
 
-vif_data::            feature       VIF
-0                      tenure  5.966841
-1                      MonthlyCharges  3.235405
-2                      TotalCharges  9.593835
-3                      Dependents  1.272079
-4                      InternetService  1.284656
+To establish the periodicity of churn, we assume a monthly basis for customers on monthly contracts and a yearly basis for those on annual contracts. However, as contract end dates are unavailable in the data, we opt for a monthly churn assumption.
 
-TotalCharges and tenure are bit correlated
+From the Data Analysis conducted in notebooks/Telco_churn_prediction.ipynb, it was observed that tenure exhibits a strong correlation with churn. However, considering tenure for active customers introduces potential data leakage. Therefore, we assume tenure to be the duration (in months) a customer has been active or was active before churning.
+
+**Hypotheses**:
+1. Customers more likely to churn tend to have lower tenure.
+2. Customers more likely to churn have lower tenure and higher monthly charges.
 
 
-### Finally logistic regression was chosen features
-Hyper param tuning
-              precision    recall  f1-score   support
+**Design Choices**:
+Batch processing of user data for model training and periodic inference.
+Reusable components for feature encoding and pipeline deployment, facilitating training and inference across different user cohorts.
+Utilization of Airflow for pipeline orchestration, enabling dynamic cohort selection.
+Inclusion of additional parameters during inference, such as contract end date, for prioritizing users in campaign targeting.
 
-           0       0.82      0.93      0.87      1311
-           1       0.65      0.40      0.49       447
+**Pipeline Description***:
+Training Pipeline: Data Preprocessing (Clean data, Preprocessing, Train-Test Split) -> Model Training (Logistic Regression) -> Model Evaluation (ROC AUC) -> Model Saving and Metric Tracking via MLFlow.
+Inference Pipeline: Similar preprocessing with inference flag set to true to skip unnecessary steps -> Model Loading and Inference Execution. Predictions can be stored in a SQL database.
 
-    accuracy                           0.79      1758
-   macro avg       0.73      0.66      0.68      1758
-weighted avg       0.77      0.79      0.77      1758
+**Model Performance Evaluation**:
+Logistic Regression with selected features (['tenure', 'InternetService', 'Dependents', 'TotalCharges', 'MonthlyCharges']) achieved 79% accuracy. However, high VIF values for TotalCharges and tenure indicate correlated features.
+Model alone with tenure doesnt really perform well, and 2nd Hypothesis is supported as this gives a better performance of 79% accuracy.
 
-## Model Evaluation Metrics
-```
-For performance assessment of the chosen models, various metrics are used:
+**Hyperparameter Tuning and evaluation metrics**:
+Precision: 0.82, Recall: 0.93, F1-Score: 0.87 for non-churners, Precision: 0.65, Recall: 0.40, F1-Score: 0.49 for churners, with an overall accuracy of 79%.
 
-Feature weights: Indicates the top features used by the model to generate the predictions
-Confusion matrix: Shows a grid of true and false predictions compared to the actual values
-Accuracy score: Shows the overall accuracy of the model for training set and test set
-ROC Curve: Shows the diagnostic ability of a model by bringing together true positive rate (TPR) and false positive rate (FPR) for different thresholds of class predictions (e.g. thresholds of 10%, 50% or 90% resulting to a prediction of churn)
-AUC (for ROC): Measures the overall separability between classes of the model related to the ROC curve
-Precision-Recall-Curve: Shows the diagnostic ability by comparing false positive rate (FPR) and false negative rate (FNR) for different thresholds of class predictions. It is suitable for data sets with high class imbalances (negative values overrepresented) as it focuses on precision and recall, which are not dependent on the number of true negatives and thereby excludes the imbalance
-F1 Score: Builds the harmonic mean of precision and recall and thereby measures the compromise between both.
-AUC (for PRC): Measures the overall separability between classes of the model related to the Precision-Recall curve
+**Scaling Up the Pipeline Discussion**:
+Airflow DAGs can be executed on a Kubernetes cluster to enable large-scale inference on extensive user databases.
+
+**Future Work**:
+Investigate feature engineering techniques to address multicollinearity.
+Explore advanced machine learning models to improve predictive performance.
+Implement real-time inference capabilities for immediate campaign deployment.
+Enhance scalability by integrating with cloud-based solutions for resource optimization.
+
 ```
 
-++++++
+++++++ STEPS TO RUN +++++++
 
-RUN
 ```
 cd customer_churn
-docker-compose build python
+docker-compose build
+
+docker-compose run airflow
+docker-compose run mlflow
+docker-compose run python
 ```
+
 Airflow Training and inference pipeline can be scheduled at different time intervals
 Based on target customer (cohort type). For monthly contract type -> pipeline can be run weekly or daily and for yearly contract type, same pipeline can be run monthly
 

@@ -21,7 +21,7 @@ services:
     restart: always
     command: mlflow server --host 0.0.0.0 --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlflow_artifacts
     ports:
-      - "5000:5000"
+      - "8000:8000"
     volumes:
       - ./mlflow_artifacts:/mlflow_artifacts
       - ./mlflow_db:/mlflow_db
@@ -35,7 +35,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/app
-    command: bash -c "pip install --no-cache-dir -r requirements.txt && airflow db init && airflow webserver --port 8080"
-
+    command: bash -c "pip install psutil && pip install --no-cache-dir -r requirements.txt && pip install apache-airflow==2.8.1 --constraint https://raw.githubusercontent.com/apache/airflow/constraints-2.8.1/constraints-3.10.txt && airflow db init && airflow webserver --port 8081"
 volumes:
   mlflow_db:
