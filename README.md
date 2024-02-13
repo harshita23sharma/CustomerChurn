@@ -4,7 +4,7 @@ End to end ML production pipeline for Customer Churn Prediction
 Machine Learning Case Study: Telco Customer Churn Prediction
 Dataset : https://www.kaggle.com/datasets/blastchar/telco-customer-churn
 
-**About Dataset**:
+#### **About Dataset**:
 Customers who left within the last month – the column is called Churn
 
 
@@ -14,38 +14,37 @@ To establish the periodicity of churn, we assume a monthly basis for customers o
 
 From the Data Analysis conducted in notebooks/Telco_churn_prediction.ipynb, it was observed that tenure exhibits a strong correlation with churn. However, considering tenure for active customers introduces potential data leakage. Therefore, we assume tenure to be the duration (in months) a customer has been active or was active before churning.
 
-**Hypotheses**:
+#### **Hypotheses**:
 1. Customers more likely to churn tend to have lower tenure.
 2. Customers more likely to churn have lower tenure and higher monthly charges.
 
 
-**Design Choices**:
+#### **Design Choices**:
 Batch processing of user data for model training and periodic inference.
 Reusable components for feature encoding and pipeline deployment, facilitating training and inference across different user cohorts.
 Utilization of Airflow for pipeline orchestration, enabling dynamic cohort selection.
 Inclusion of additional parameters during inference, such as contract end date, for prioritizing users in campaign targeting.
 
-**Pipeline Description***:
+#### **Pipeline Description**:
 Training Pipeline: Data Preprocessing (Clean data, Preprocessing, Train-Test Split) -> Model Training (Logistic Regression) -> Model Evaluation (ROC AUC) -> Model Saving and Metric Tracking via MLFlow.
 Inference Pipeline: Similar preprocessing with inference flag set to true to skip unnecessary steps -> Model Loading and Inference Execution. Predictions can be stored in a SQL database.
 
-**Model Performance Evaluation**:
+#### **Model Performance Evaluation**:
 Logistic Regression with selected features (['tenure', 'InternetService', 'Dependents', 'TotalCharges', 'MonthlyCharges']) achieved 79% accuracy. However, high VIF values for TotalCharges and tenure indicate correlated features.
 Model alone with tenure doesnt really perform well, and 2nd Hypothesis is supported as this gives a better performance of 79% accuracy.
 
-**Hyperparameter Tuning and evaluation metrics**:
+#### **Hyperparameter Tuning and evaluation metrics**:
 Precision: 0.82, Recall: 0.93, F1-Score: 0.87 for non-churners, Precision: 0.65, Recall: 0.40, F1-Score: 0.49 for churners, with an overall accuracy of 79%.
 
-**Scaling Up the Pipeline Discussion**:
+#### **Scaling Up the Pipeline Discussion**:
 Airflow DAGs can be executed on a Kubernetes cluster to enable large-scale inference on extensive user databases.
 
-**Future Work**:
+#### **Future Work**:
 Investigate feature engineering techniques to address multicollinearity.
 Explore advanced machine learning models to improve predictive performance.
 Implement real-time inference capabilities for immediate campaign deployment.
 Enhance scalability by integrating with cloud-based solutions for resource optimization.
 
-```
 
 ++++++ STEPS TO RUN +++++++
 
